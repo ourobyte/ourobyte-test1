@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes Cerita Diri: Penjelajahan</title>
+    <!-- Memuat Tailwind CSS untuk styling modern dan responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Menggunakan font Inter untuk tampilan bersih */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* light gray background */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1e40af', /* Blue 700 */
+                        'primary-light': '#60a5fa', /* Blue 400 */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+<div id="app" class="w-full max-w-3xl bg-white shadow-2xl rounded-xl p-6 md:p-10 border border-gray-100">
+
+    <header class="mb-8 text-center border-b pb-4">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Sang Penjelajah</h1>
+        <p class="text-gray-500 italic">Jawab setiap pertanyaan sesuai alur imajinasi anda.</p>
+    </header>
+
+    <div id="question-container" class="space-y-8 mb-8">
+        <!-- Questions will be dynamically inserted here -->
+    </div>
+
+    <div class="flex justify-center mt-10">
+        <!-- Tombol utama sekarang memicu validasi dan penyalinan teks -->
+        <button id="calculate-button" onclick="calculateResult()"
+                class="w-full md:w-auto px-8 py-3 bg-primary-blue text-white font-bold rounded-lg shadow-lg hover:bg-primary-light transition duration-300 transform hover:scale-105 disabled:bg-gray-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h6a2 2 0 00-2-2H5z" />
+            </svg>
+            Selesaikan & Salin Jawaban
+        </button>
+    </div>
+    
+    <!-- Textarea tersembunyi untuk proses penyalinan -->
+    <textarea id="copy-text-source" class="absolute left-[-9999px]" readonly></textarea>
+
+</div>
+
+<script>
+    // Data pertanyaan cerita dan skor untuk setiap opsi (a=1, b=2, c=3, d=4, e=5)
+    const questionsData = [
+        { 
+            q: "jawabannya...",
+            options: ["Landai", "Tidak terlalu tinggi", "Cukup tinggi", "Tinggi dan curam", "Sangat tinggi, hampir menekan"],
+            q_full: "Kamu berjalan sendirian di sebuah jalur alam yang asing dengan peralatan lengkap yang tidak bisa kamu sebutkan, tapi entah kenapa terasa akrab. Udara bersih, langkahmu mengikuti tanah tanpa perlu dipikirkan. Beberapa menit kemudian, jalur di depanmu berubah menjadi lereng yang menjulang tinggi. Kamu berhenti sejenak, menatap ke atas, dan secara spontan menilai tingginya. Menurutmu lereng itu…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Biasa saja", "Sedikit lelah", "Fokus pada langkah", "Tertantang", "Ada dorongan aneh yang menguat"],
+            q_full: "Kamu mulai menaikinya. Setiap langkah membuat tubuhmu bereaksi. Yang paling kamu rasakan saat mendaki adalah…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Nyaris datar", "Stabil", "Mulai curam", "Curam", "Sangat curam"],
+            q_full: "Semakin ke atas, kemiringan lereng berubah. Tanpa menghitung atau mengukur, bagimu lereng ini terasa…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Turun perlahan dan berhati-hati", "Mengikuti jalur yang sudah ada", "Menuruni dengan langkah panjang", "Turun cukup cepat", "Membiarkan tubuh mengikuti gravitasi"],
+            q_full: "Sampai di puncak, jalur turun terbuka di sisi lain. Kamu harus menuruni lereng itu untuk melanjutkan perjalanan. Cara yang langsung terlintas di benakmu untuk menuruni lereng adalah…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Hitam", "Coklat terang", "Putih", "Belang", "Sulit dijelaskan, tapi menarik"],
+            q_full: "Setalah berada di kaki lereng, ada seekor kuda berdiri sendirian. Tidak terikat, tidak gelisah dan membawa bag berisi ranting dan kayu, seolah memang menunggumu. Warna kuda itu…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Pelan", "Stabil", "Cepat", "Sangat cepat", "Hampir sulit dikendalikan"],
+            q_full: "Kamu ingin menaikinya tanpa ragu. Kuda itu mulai berjalan, lalu berlari. Kecepatannya terasa…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Tidak tertarik", "Netral", "Penasaran", "Tertarik", "Sangat tertarik"],
+            q_full: "Setelah menaiki kuda sampai menjelang senja, kamu dengan kuda-mu berhenti di depan sebuah gua. Mulut gua itu terbuka, tidak mengancam, tapi jelas ada sesuatu di dalamnya. Perasaan pertamamu saat melihat gua itu adalah…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Aman", "Tenang", "Penasaran", "Tegang tapi nyaman", "Terlalu nyaman"],
+            q_full: "Kamu masuk kedalam gua itu. Cahaya di dalam gua membuat ruang terasa berbeda dari luar. Di dalam gua, kamu merasa…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Kecil", "Sedang", "Cukup besar", "Besar dan panas", "Menyala kuat"],
+            q_full: "Tanpa berpikir lama, kamu membuat api unggun dari bekas tumpukan ranting dan kayu yang dibawa dari kuda, lalu kamu membakarnya. Kamu duduk di dekat api unggun yang sudah menyala, api itu berukuran..."
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Jauh", "Aman", "Pas", "Dekat", "Sangat dekat"],
+            q_full: "Kamu menghangatkan tangan dengan api tersebut. Jarak yang terasa paling pas bagimu adalah…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Mencari tempat berteduh", "Menunggu hujan berhenti", "Tetap berjalan", "Membiarkan diri basah", "Menikmati hujan"],
+            q_full: "Saat kamu keluar dari gua, malam turun dan hujan mulai jatuh. Tidak deras, tapi cukup terasa. Tiba saatnya kamu keluar dari gua, malam turun dan hujan mulai jatuh. Tidak deras, tapi cukup terasa. Reaksimu adalah…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Sedikit terbuka", "Tertutup ringan", "Tertutup rapat", "Berat dan besar", "Terbuka lebar"],
+            q_full: "Di tengah hujan, kamu menemukan sebuah pintu berdiri sendiri, seolah bukan bagian dari apa pun. Di tengah hujan, kamu menemukan sebuah gubuk dan mendekatinya, Pintu itu terlihat…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Luas dan kosong", "Sederhana", "Hangat", "Redup dan dekat", "Sangat intim"],
+            q_full: "Kamu membukanya. Di balik pintu, ada sebuah ruangan. Kamu membukanya. Di balik pintu, ada sebuah ruangan. Ruangan itu terasa…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Cepat", "Normal", "Melambat", "Sangat lambat", "Seolah berhenti"],
+            q_full: "Di ruangan itu, waktu seakan berubah. Di ruangan itu, waktu seakan berubah. Bagimu, waktu terasa berjalan…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Mengabaikannya", "Menyentuhnya sebentar", "Mengamatinya", "Mengambilnya", "Memilih yang paling besar"],
+            q_full: "Sebelum pergi, matamu tertuju pada sebuah buah matang di atas meja. Tanpa berpikir panjang, kamu…"
+        },
+        { 
+            q: "jawabannya...",
+            options: ["Jalur yang kamu lewati", "Suasananya", "Sensasi tubuhmu", "Detail kecilnya", "Perasaan yang sulit dijelaskan"],
+            q_full: "Perjalanan berakhir. Saat semuanya selesai, hal yang paling tertinggal dalam dirimu adalah…"
+        }
+    ];
+
+    /**
+     * Menghasilkan HTML untuk satu pertanyaan.
+     * @param {Object} data - Objek data pertanyaan.
+     * @param {number} index - Indeks pertanyaan (dimulai dari 0).
+     * @returns {string} HTML string.
+     */
+    function generateQuestionHtml(data, index) {
+        const qNumber = index + 1;
+        
+        let optionsHtml = '';
+        data.options.forEach((option, i) => {
+            // Nilai score adalah (i + 1) -> a=1, b=2, c=3, d=4, e=5
+            const score = i + 1; 
+            const optionId = `q${qNumber}o${i}`;
+            const labelChar = String.fromCharCode(97 + i); // 'a', 'b', 'c', 'd', 'e'
+
+            optionsHtml += `
+                <label for="${optionId}" 
+                       class="flex items-start p-4 border border-gray-200 rounded-lg cursor-pointer bg-white hover:bg-blue-50 transition duration-150">
+                    <input type="radio" id="${optionId}" name="q${qNumber}" value="${score}" 
+                           class="mt-1 h-4 w-4 text-primary-blue focus:ring-primary-light">
+                    <span class="ml-3 text-gray-700">
+                        <span class="font-semibold text-primary-blue">${labelChar}.</span> ${option}
+                    </span>
+                </label>
+            `;
+        });
+
+        return `
+            <div class="question-block p-5 bg-gray-50 rounded-lg shadow-inner">
+                <p class="text-sm text-black-500 mb-2">${data.q_full}</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <span class="text-primary-blue">${qNumber}.</span> ${data.q}
+                </h3>
+                <div class="space-y-3">
+                    ${optionsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Mengisi container dengan semua pertanyaan.
+     */
+    function renderQuestions() {
+        const container = document.getElementById('question-container');
+        container.innerHTML = questionsData.map(generateQuestionHtml).join('');
+    }
+
+    /**
+     * Mengumpulkan jawaban singkat dan langsung menyalinnya.
+     */
+    function calculateResult() {
+        let allAnswered = true;
+        const conciseAnswers = []; // Format singkat (untuk disalin)
+        
+        // Loop melalui semua pertanyaan
+        questionsData.forEach((data, index) => {
+            const qNumber = index + 1;
+            const selectedOption = document.querySelector(`input[name="q${qNumber}"]:checked`);
+            
+            if (selectedOption) {
+                // Determine the letter (a, b, c, d, e)
+                const score = parseInt(selectedOption.value, 10);
+                const optionIndex = score - 1; 
+                const labelChar = String.fromCharCode(97 + optionIndex);
+
+                // Format Singkat (untuk disalin)
+                conciseAnswers.push(`${qNumber}.${labelChar}`);
+                
+            } else {
+                allAnswered = false;
+            }
+        });
+
+        // Tampilkan pesan jika ada pertanyaan yang belum dijawab
+        if (!allAnswered) {
+            showCustomAlert('Mohon jawab semua 16 pertanyaan sebelum menyalin hasil.', 'Perhatian');
+            return;
+        }
+
+        // --- Step 1: Prepare the text for copying (e.g., "1.a 2.b 3.c ...") ---
+        const copyText = conciseAnswers.join(' ');
+        document.getElementById('copy-text-source').value = copyText;
+
+        // --- Step 2: Trigger the copy function ---
+        copyResultText(); 
+        
+        // Update button text to reflect the action taken
+        document.getElementById('calculate-button').textContent = 'Salin Ulang Jawaban';
+
+        // Scroll ke bagian atas untuk konfirmasi penyalinan
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /**
+     * Menyalin teks hasil ke clipboard.
+     */
+    function copyResultText() {
+        const copyTextarea = document.getElementById('copy-text-source');
+        copyTextarea.select();
+        // Menggunakan execCommand('copy') sebagai fallback yang kompatibel di iframe
+        document.execCommand('copy');
+        
+        // Tampilkan notifikasi
+        showCustomAlert('Jawaban singkat (misal: 1.a 2.b) telah berhasil disalin ke clipboard!', 'Berhasil Disalin!');
+    }
+
+    /**
+     * Custom Alert (Pengganti alert())
+     */
+    function showCustomAlert(message, title = 'Notifikasi') {
+        // Cek jika modal sudah ada, hapus dulu
+        if (document.getElementById('custom-modal')) {
+            document.getElementById('custom-modal').remove();
+        }
+
+        const modalHtml = `
+            <div id="custom-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 transform transition-all">
+                    <h4 class="text-xl font-bold text-primary-blue mb-3">${title}</h4>
+                    <p class="text-gray-700 mb-6">${message}</p>
+                    <div class="flex justify-end">
+                        <button onclick="document.getElementById('custom-modal').remove()" 
+                                class="px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-light transition duration-150">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    // Initialize the quiz when the page loads
+    window.onload = renderQuestions;
+</script>
+</body>
+</html>
